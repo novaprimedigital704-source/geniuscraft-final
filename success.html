@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body>
+  <h1>Pagamento bem sucedido!</h1>
+  <p>Obrigado pela compra. Você será redirecionado em alguns segundos...</p>
+  <script>
+    const url = new URL(location.href);
+    const session_id = url.searchParams.get('session_id');
+    if (session_id) {
+      // redirect to main page carrying session id
+      setTimeout(()=> { location.href = '/?session_id=' + session_id }, 2500);
+    }
+  </script>
+</body>
+</html>
