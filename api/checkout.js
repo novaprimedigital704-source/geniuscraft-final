@@ -23,7 +23,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método não permitido." });
 
   try {
-    let { plan, priceId, email } = req.body || {};
+    let { plan, email } = req.body || {};
+
+    if (!plan)
+      return res.status(400).json({ error: "Plano é obrigatório." });
 
     if (!email)
       return res.status(400).json({ error: "Email é obrigatório." });
@@ -36,19 +39,18 @@ export default async function handler(req, res) {
       });
     }
 
+    // MAPEIA PLAN → PRICE ID REAL
     const priceMap = {
       basic: process.env.STRIPE_BASIC_PLAN_ID,
       pro: process.env.STRIPE_PRO_PLAN_ID,
       studio: process.env.STRIPE_STUDIO_PLAN_ID,
     };
 
-    if (!priceId && plan) {
-      priceId = priceMap[plan];
-    }
+    const priceId = priceMap[plan];
 
     if (!priceId) {
       return res.status(400).json({
-        error: "priceId ou plano inválido."
+        error: "Plano inválido."
       });
     }
 
