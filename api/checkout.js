@@ -1,3 +1,4 @@
+// api/checkout.js
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método não permitido." });
 
   try {
-    let { plan, email } = req.body || {};
+    const { plan, email } = req.body || {};
 
     if (!plan)
       return res.status(400).json({ error: "Plano é obrigatório." });
@@ -31,27 +32,25 @@ export default async function handler(req, res) {
     if (!email)
       return res.status(400).json({ error: "Email é obrigatório." });
 
-    email = email.toLowerCase().trim();
+    const normalizedEmail = email.toLowerCase().trim();
 
-    if (isDisposableEmail(email)) {
+    if (isDisposableEmail(normalizedEmail)) {
       return res.status(403).json({
         error: "Emails temporários ou descartáveis não são permitidos."
       });
     }
 
-    // MAPEIA PLAN → PRICE ID REAL
+    // Mapeamento para seus preços reais do Stripe
     const priceMap = {
-      basic: process.env.STRIPE_BASIC_PLAN_ID,
-      pro: process.env.STRIPE_PRO_PLAN_ID,
-      studio: process.env.STRIPE_STUDIO_PLAN_ID,
+      basic: "price_1SXwjnLooFe0F9gaMhOnaU3I",
+      pro: "price_1SXwpILooFe0F9gaQEDSo4M8",
+      studio: "price_1SXwt3LooFe0F9gaE5EanLAj",
     };
 
     const priceId = priceMap[plan];
 
     if (!priceId) {
-      return res.status(400).json({
-        error: "Plano inválido."
-      });
+      return res.status(400).json({ error: "Plano inválido." });
     }
 
     const origin =
@@ -61,9 +60,9 @@ export default async function handler(req, res) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      customer_email: email,
+      customer_email: normalizedEmail,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(email)}`,
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&email=${encodeURIComponent(normalizedEmail)}`,
       cancel_url: `${origin}/cancel`,
     });
 
